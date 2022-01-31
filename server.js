@@ -11,7 +11,7 @@ const adminRouter = require('./routes/admin')
 require('dotenv').config()
 
 var corsOptions = {
-    origin: 'http://localhost:3000',
+    origin: '*',
 }
 // parse application/x-www-form-urlencoded
 app.use(bodyParser.urlencoded({ extended: false }))
@@ -19,6 +19,7 @@ app.use(bodyParser.urlencoded({ extended: false }))
 // parse application/json
 app.use(bodyParser.json())
 app.use(cors(corsOptions))
+
 
 db.connect((err) => {
     if (err) {
