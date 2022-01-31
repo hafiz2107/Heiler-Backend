@@ -3,6 +3,7 @@ const app = express()
 const morgan = require('morgan')
 var cors = require('cors')
 const db = require('./config/database')
+var bodyParser = require('body-parser')
 
 const userRouter = require('./routes/user')
 const doctorRouter = require('./routes/doctor')
@@ -12,7 +13,11 @@ require('dotenv').config()
 var corsOptions = {
     origin: 'http://localhost:3000',
 }
+// parse application/x-www-form-urlencoded
+app.use(bodyParser.urlencoded({ extended: false }))
 
+// parse application/json
+app.use(bodyParser.json())
 app.use(cors(corsOptions))
 
 db.connect((err) => {
@@ -24,7 +29,7 @@ db.connect((err) => {
 })
 
 app.use(morgan('dev'))
-app.use('/', userRouter);
+app.use('/user', userRouter);
 app.use('/doctor', doctorRouter);
 app.use('/admin', adminRouter);
 
