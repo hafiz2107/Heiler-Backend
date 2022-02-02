@@ -49,7 +49,6 @@ async function sendMail(details, res) {
             res.status(201).json({ message: "There is Some error in Sending The Email" });
             return;
         }
-
         const sendResponse = async () => {
             // inserting user to a temporary collection
             // Hashing THe password And OTP
@@ -70,16 +69,9 @@ async function sendMail(details, res) {
                     res.status(202).json(err)
                 })
             }
-
-
-
         }
-
         sendResponse()
-
     });
-
-
 }
 
 module.exports = sendMail

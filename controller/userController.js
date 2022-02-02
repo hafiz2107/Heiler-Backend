@@ -6,7 +6,7 @@ const { OAuth2Client } = require('google-auth-library')
 const dotenv = require('dotenv')
 const nodemailer = require("nodemailer");
 const ObjectId = require('mongodb').ObjectId
-const sendMail = require('../utils/nodeMailer')
+const sendMailToUser = require('../utils/nodeMailer');
 
 dotenv.config();
 
@@ -18,7 +18,7 @@ const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID)
 module.exports = {
     // Function To Register New User
     sendOTP: async (req, res) => {
-        sendMail(req.body, res)
+        sendMailToUser(req.body, res)
     },
 
     verifyOtp: async (req, res) => {
@@ -31,19 +31,18 @@ module.exports = {
             if (response) {
                 // OTP is Correct
                 db.get().collection(collection.USER_DETAILS).insertOne({ ...user }).then((result) => {
-                    db.get().collection(collection.USER_DETAILS).deleteOne({ _id: user._id }).then((deletedResponse) => {
+                    db.get().collection(collection.AUTH_USER).deleteOne({ _id: user._id }).then((deletedResponse) => {
                         res.status(200).json({ message: "OTP Verification Successfull" })
                     })
                 })
             } else {
                 // OTP Is incorrect
-                res.status(402).json({ message: "OTP Incorrect" })
+                res.status(201).json({ message: "OTP Incorrect" })
             }
         })
     },
     // Function to authenticate user
     authenticateUser: async (req, res) => {
-        cosn
         let user = await db.get().collection(collection.USER_DETAILS).findOne({ email: req.body.email })
 
         // Checking if there is a user
@@ -56,7 +55,6 @@ module.exports = {
                         res.status(200).json({
                             message: 'Auth successfull',
                             token,
-
                         })
                     } else {
                         // If there is any error in token generation
