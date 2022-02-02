@@ -1,39 +1,62 @@
 const db = require('../config/database')
 const collection = require('../config/collections')
-var bcrypt = require('bcryptjs');
-var jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const { OAuth2Client } = require('google-auth-library')
 const dotenv = require('dotenv')
+const nodemailer = require("nodemailer");
+const ObjectId = require('mongodb').ObjectId
+const sendMail = require('../utils/nodeMailer')
+
 dotenv.config();
+
+
 
 // Creating a new Client
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID)
 
 module.exports = {
     // Function To Register New User
-    registerUser: async (req, res) => {
-        // Hashing THe password
-        let passwordHash = await bcrypt.hash(req.body.password, 10)
-        // Inserting new User to the DB
-        db.get().collection(collection.USER_DETAILS).insertOne({ ...req.body, password: passwordHash, picture: 'https://cdn3.iconfinder.com/data/icons/avatars-round-flat/33/avat-01-512.png' }).then((result) => {
-            res.status(200).json(result)
-        }).catch((err) => {
-            res.status(404).json(err)
+    sendOTP: async (req, res) => {
+        sendMail(req.body, res)
+    },
+
+    verifyOtp: async (req, res) => {
+        const { userId, inputOtp } = req.body;
+
+        let user = await db.get().collection(collection.AUTH_USER).findOne({ _id: ObjectId(userId) })
+
+        // Comparing The OTP In database and OTP Input
+        bcrypt.compare(inputOtp, user.otp, function (err, response) {
+            if (response) {
+                // OTP is Correct
+                db.get().collection(collection.USER_DETAILS).insertOne({ ...user }).then((result) => {
+                    db.get().collection(collection.USER_DETAILS).deleteOne({ _id: user._id }).then((deletedResponse) => {
+                        res.status(200).json({ message: "OTP Verification Successfull" })
+                    })
+                })
+            } else {
+                // OTP Is incorrect
+                res.status(402).json({ message: "OTP Incorrect" })
+            }
         })
     },
     // Function to authenticate user
     authenticateUser: async (req, res) => {
-
+        cosn
         let user = await db.get().collection(collection.USER_DETAILS).findOne({ email: req.body.email })
 
         // Checking if there is a user
         if (user) {
             bcrypt.compare(req.body.password, user.password, function (err, response) {
                 if (response) {
-                    const token = jwt.sign({ username: req.body.username, email: req.body.email, password: req.body.password }, 'secret', { expiresIn: "24hr" });
+                    const token = jwt.sign({ email: req.body.email, password: req.body.password }, 'secret', { expiresIn: "24hr" });
+
                     if (token) {
                         res.status(200).json({
-                            message: 'Auth successful',
+                            message: 'Auth successfull',
+                            token,
+
                         })
                     } else {
                         // If there is any error in token generation
@@ -65,6 +88,7 @@ module.exports = {
             // If user with same mail id is found
             // Then The response is send
             res.status(201).json({ message: "Successfully Logged in" });
+
         } else {
             // If there is no user with that email id then the user is signed Up;
             db.get().collection(collection.USER_DETAILS).insertOne({ username: name, email: email, picture: picture }).then((result) => {
@@ -75,11 +99,11 @@ module.exports = {
             })
         }
     },
-    
+
     // Checking a user exists with the same email
     checkUserEmail: async (req, res) => {
         const { email } = req.body
-        
+
         db.get().collection(collection.USER_DETAILS).findOne({ email: email }).then((result) => {
             if (result) {
                 res.status(204).json({ message: "Email already exists !" })
