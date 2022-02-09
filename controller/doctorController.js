@@ -104,4 +104,29 @@ module.exports = {
             }
         })
     },
+
+    authenticateGoogleDoctor : async (req,res) => {
+        const { token } = req.body
+        const ticket = await client.verifyIdToken({
+            idToken: token,
+            audience: process.env.GOOGLE_CLIENT_ID,
+        });
+
+        const { name, email, picture } = ticket.getPayload();
+        // Finding User of same EmailID
+        const doctor = await db.get().collection(collection.DOCTOR_DETAILS).findOne({ email: email })
+        if (doctor) {
+            // If user with same mail id is found
+            // Then The response is send
+            res.status(201).json({ message: "Successfully Logged in" });
+        } else {
+            // If there is no user with that email id then the user is signed Up;
+            db.get().collection(collection.DOCTOR_DETAILS).insertOne({ username: name, email: email, picture: picture }).then((result) => {
+                res.status(200).json({ message: "Signed Up successfully" })
+            }).catch((err) => {
+                console.log(("@authenticateGoogle User || the Error in inserting new doctor is : ", err));
+                res.status(400).json({ message: "Some Error in signup" })
+            })
+        }
+    }
 }
