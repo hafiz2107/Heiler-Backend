@@ -27,14 +27,14 @@ async function sendMail(details) {
         port: 587,
         secure: false, // true for 465, false for other ports
         auth: {
-            user: process.env.MAIL_AUTH_USER,
-            pass: process.env.MAIL_AUTH_PASS,
+            user: 'heiler.auth@gmail.com',
+            pass: '@1a2b3c4d',
         },
     });
-
+ 
     let mailOptions = {
         from: process.env.MAIL_AUTH_USER, // sender address
-        to: details.email, // list of receivers
+        to: details.email, // list of receivers 
         subject: "Your One Time Password For Heielier is : ", // Subject line
         text: "Heiler OTP", // plain text body
         html: emailBody,

@@ -20,7 +20,10 @@ module.exports = {
     sendOTP: async (req, res) => {
         let options = await sendMailToUser(req.body)
 
+        console.log(req.body);
+
         options.transporter.sendMail(options.mailOptions, async function (err, info) {
+            console.log(err)
             if (err) {
                 res.status(201).json({ message: "There is Some error in Sending The Email" });
                 return;
@@ -36,18 +39,18 @@ module.exports = {
             if (checkForEmailInAuthUser) {
                 db.get().collection(collection.AUTH_USER).updateOne({ email: req.body.email }, { $set: { otp: options.OTP, password: req.body.password } }).then((response) => {
                     res.status(200).json(checkForEmailInAuthUser._id)
-                })
+                }) 
             } else {
                 // Inserting new User to the temp DB
                 db.get().collection(collection.AUTH_USER).insertOne({ ...req.body, picture: 'https://cdn3.iconfinder.com/data/icons/avatars-round-flat/33/avat-01-512.png', otp: options.OTP }).then((result) => {
-                    res.status(200).json(result.insertedId)
+                    res.status(200).json(result.insertedId)  
                 }).catch((err) => {
                     res.status(400).json(err)
-                })
+                }) 
             }
         });
     },
-    verifyOtp: async (req, res) => {
+    verifyOtp: async (req, res) => {  
         const { userId, inputOtp } = req.body;
         let user = await db.get().collection(collection.AUTH_USER).findOne({ _id: ObjectId(userId) })
         // Comparing The OTP In database and OTP Input
@@ -72,7 +75,7 @@ module.exports = {
         if (user) {
             bcrypt.compare(req.body.password, user.password, function (err, response) {
                 if (response) {
-                    const token = jwt.sign({ email: req.body.email, password: req.body.password }, process.env.JWT_SECRET, { expiresIn: 300 });
+                    const token = jwt.sign({ email: req.body.email, password: req.body.password }, 'secret', { expiresIn: 300 });
 
                     if (token) {
                         res.status(200).json({
